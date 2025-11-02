@@ -37,7 +37,7 @@ LIMIT 8;
 
 SELECT 
     commercial_name,
-    active_ingredient
+    active_ingredient IN ('IBUPROFENO','PARACETAMOL')
 FROM smart_health.medications
 ORDER BY commercial_name;
 LIMIT 25;

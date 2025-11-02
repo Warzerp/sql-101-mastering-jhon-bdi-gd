@@ -71,3 +71,121 @@ LIMIT 10;
 -- departamentos, uniendo ambas tablas mediante la clave foránea department_code. 
 -- Se ordena por el nombre del departamento para facilitar la localización 
 -- geográfica, mostrando los 15 primeros resultados.
+--------------------------------------------------------
+
+--Obtener los pacientes(primer nombre,genero y correo, numero telf), con sus numeros de telefonos
+-- que tengan los siguientes numeros de documentos
+
+--identificar tipo join, tablas comprometidas, relaciones
+--SELECT:
+--primer nombre
+--genero
+--numero de telefono
+--INNER JOIN
+-- smart_health.patients: patient_id (PK)
+-- : patient_id (FK)
+
+SELECT
+    A.first_name AS primer_nombre,
+    A.gender AS genero,
+    A.email AS correo,
+    B.phone_number AS numero_telefono
+
+FROM smart_health.patients A
+INNER JOIN smart_health.patient_phones B 
+    ON  A.patient_id = B.patient_id
+
+WHERE A.document_number IN
+(
+'30451580'
+'1006631391',
+'1009149871',
+'1298083',
+'1004928596',
+'1008188849',
+'1607132',
+'30470003'
+
+);    
+
+--------------------------------------
+--Obtener los pacientes(primer nombre,genero y correo, numero telf), con sus numeros de telefonos
+-- que tengan los siguientes numeros de documentos (tengan o no number )
+
+--identificar tipo join, tablas comprometidas, relaciones
+--SELECT:
+--primer nombre
+--genero
+--numero de telefono
+--INNER JOIN
+-- smart_health.patients: patient_id (PK)
+-- : patient_id (FK)
+
+SELECT
+    B.first_name AS primer_nombre,
+    B.gender AS genero,
+    B.email AS correo,
+    A.phone_number AS numero_telefono
+
+FROM smart_health.patient_phones A
+RIGHT JOIN smart_health.patients B 
+    ON  A.patient_id = B.patient_id
+
+WHERE B.document_number IN
+(
+'30451580'   
+'1006631391',
+'1009149871',
+'1298083',
+'1004928596',
+'1008188849',
+'1607132',
+'30470003'
+
+);  
+--------------------------------------------------------------------
+--CONTAR MEDICOS QUE NO TIENEN DIRECCION
+
+--LEFT JOIN
+
+--smart_health.doctors:  doctor_id (PK)
+--smart_health.doctor.addresses: doctor_id(FK)
+SELECT
+    COUNT(*) AS total_doctores_sin_dirección
+
+FROM smart_health.doctors A
+LEFT JOIN  smart_health.doctor_addresses B
+    ON A.doctor_id = B.doctor_id
+WHERE B.doctor_id IS NULL;     
+------------------------------------------------------------------------------
+--mostrar nombre completo del paciente,genero,tipo de sangre,direccion,ciudad(municipio) y 
+--departamento de los pacientes que viven en pamplona, ns. ordenar por el
+--primer nombre de forma alfabetica. Mostrar los primeros 5 resultados
+
+--identificar tipo join, tablas comprometidas, relaciones
+--coalesce(campo,'')
+--tablas:pacientes,direcciones,pac-dire,departamentos,muncipios/ciudades
+
+
+--FROM: patients-->A
+--FROM: adresses -->B
+SELECT
+    first_name,
+    middle_name,
+    first_surname,
+    second_surname,
+    gender,
+    blood_type,
+    address_id,
+    municipality_code
+    postal_code
+
+FROM smart_health.address A 
+RIGHT JOIN smart_health.patients B
+    ON A.patients_id = B.patients_id  
+    ORDER BY first_name DESC
+    LIMIT 5;
+
+
+
+
