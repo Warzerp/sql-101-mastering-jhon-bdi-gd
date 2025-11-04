@@ -169,23 +169,94 @@ WHERE B.doctor_id IS NULL;
 
 --FROM: patients-->A
 --FROM: adresses -->B
+-- Ejecuta esto dentro de psql (no en cmd puro)
+-- consulta_pacientes.sql
+-- mostrar 5 pacientes que viven en Pamplona, NS
+SET search_path TO smart_health;
+
 SELECT
-    first_name,
-    middle_name,
-    first_surname,
-    second_surname,
-    gender,
-    blood_type,
-    address_id,
-    municipality_code
-    postal_code
+  -- nombre completo simple
+  COALESCE(p.first_name,'') || ' ' || COALESCE(p.first_surname,'') AS nombre_completo,
+  COALESCE(p.gender,'') AS genero,
+  COALESCE(p.blood_type, p.document_number, '') AS tipo_sangre_o_doc,
+  COALESCE(a.address_line,'') AS direccion,
+  COALESCE(m.municipality_name,'') AS municipio,
+  COALESCE(d.department_name,'') AS departamento
+FROM patients p
+JOIN patient_addresses pa ON pa.patient_id = p.patient_id
+JOIN addresses a ON a.address_id = pa.address_id
+JOIN municipalities m ON m.municipality_code = a.municipality_code
+JOIN departments d ON d.department_code = m.department_code
+WHERE LOWER(m.municipality_name) = 'pamplona'
+  AND LOWER(d.department_name) = 'norte de santander'
+ORDER BY p.first_name ASC
+LIMIT 5;
 
-FROM smart_health.address A 
-RIGHT JOIN smart_health.patients B
-    ON A.patients_id = B.patients_id  
-    ORDER BY first_name DESC
-    LIMIT 5;
+----------------------------------------------------------------------
+---2. Listar los nombres de los municipios y las direcciones registradas en cada uno, de manera que se muestren 
+---todos los municipios, incluso los que no tengan direcciones asociadas.
+SET search_path TO smart_health;
 
+SELECT
+  m.municipality_name AS municipio,
+  COALESCE(a.address_line, '') AS direccion
+FROM municipalities m
+LEFT JOIN addresses a
+  ON a.municipality_code = m.municipality_code
+ORDER BY m.municipality_name ASC;
+------------------------------------------------------------
+--3. Consultar las citas médicas junto con el nombre y apellido del
+--- médico asignado, filtrando solo las citas con estado “Confirmed”.
 
+-- Ejecuta esto dentro de psql (SET search_path opcional)
+SET search_path TO smart_health;
 
+SELECT
+  a.appointment_id,
+  a.appointment_date,
+  a.start_time,
+  a.end_time,
+  COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '') AS medico_nombre_apellido,
+  COALESCE(a.status, '') AS estado,
+  COALESCE(a.reason, '') AS motivo
+FROM appointments a
+JOIN doctors d ON d.doctor_id = a.doctor_id
+WHERE a.status = 'Confirmed'
+ORDER BY a.appointment_date, a.start_time;
+------------------------------------------------------------------------
+-------4. Mostrar los nombres y apellidos de los pacientes junto con su dirección principal, 
+--de forma que aparezcan también los pacientes sin dirección registrada.
+-- Mostrar nombre y dirección principal (incluir pacientes sin dirección)
+SET search_path TO smart_health;
 
+SELECT
+  TRIM(
+    COALESCE(p.first_name,'') || ' ' || COALESCE(p.middle_name,'') || ' ' ||
+    COALESCE(p.first_surname,'') || ' ' || COALESCE(p.second_surname,'')
+  ) AS nombre_completo,
+  COALESCE(p.gender,'') AS genero,
+  COALESCE(a.address_line,'') AS direccion_principal,
+  COALESCE(m.municipality_name,'') AS municipio,
+  COALESCE(d.department_name,'') AS departamento
+FROM smart_health.patients p
+LEFT JOIN smart_health.patient_addresses pa
+  ON pa.patient_id = p.patient_id
+  AND pa.is_primary = TRUE
+LEFT JOIN smart_health.addresses a
+  ON a.address_id = pa.address_id
+LEFT JOIN smart_health.municipalities m
+  ON m.municipality_code = a.municipality_code
+LEFT JOIN smart_health.departments d
+  ON d.department_code = m.department_code
+ORDER BY COALESCE(p.first_name,'') ASC
+LIMIT 100;
+----5. Agrupar los pacientes por tipo de sangre y mostrar la cantidad de tipos de sangre que tienen cada uno.
+-- contar pacientes por tipo de sangre
+SET search_path TO smart_health;
+
+SELECT
+  COALESCE(blood_type, 'SIN_DATOS') AS tipo_sangre,
+  COUNT(*) AS cantidad_pacientes
+FROM smart_health.patients
+GROUP BY COALESCE(blood_type, 'SIN_DATOS')
+ORDER BY cantidad_pacientes DESC;
