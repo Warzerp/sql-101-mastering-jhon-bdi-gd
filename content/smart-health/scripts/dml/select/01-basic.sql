@@ -28,18 +28,19 @@ SELECT
 
 FROM smart_health.patients
 WHERE birth_date BETWEEN '2005-01-01' AND '2008-12-31' 
-AND  gender IN ('M') 
+AND  gender IN ('M','F') 
 ORDER BY first_surname DESC
 LIMIT 8;
 
 ------------------------------------------------
 --Mostrar los medicamentos, que tienen un ingrediente activo como paracetamol o ibuprofeno
 
-SELECT 
+SELECT
     commercial_name,
-    active_ingredient IN ('IBUPROFENO','PARACETAMOL')
+    active_ingredient
 FROM smart_health.medications
-ORDER BY commercial_name;
+WHERE active_ingredient IN ('PARACETAMOL','IBUPROFENO')
+ORDER BY commercial_name
 LIMIT 25;
 
 ------------------------------------------------
@@ -68,8 +69,8 @@ SELECT first_name||' '||first_surname AS fullname,
 --Mostrar las 10 primeras citas, que se hicieron entre el 25 de 
 --Febrero del 2025 y el 28 de octubre del 2025
 
-SELECT
-    *
+    SELECT
+        *
     FROM smart_health.appointments
     WHERE appointment_date BETWEEN '2025-02-25' AND '2025-10-28'
     ORDER BY creation_date 
@@ -81,6 +82,7 @@ SELECT
 SELECT
     patient_id,
     phone_type,
+    
     phone_number
 FROM smart_health.patient_phones
 WHERE patient_id IN 
